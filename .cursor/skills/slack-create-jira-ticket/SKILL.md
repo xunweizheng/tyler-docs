@@ -100,10 +100,10 @@ Slack thread: <permalink>
 `JIRA_EMAIL` 和 `JIRA_API_TOKEN` 是环境 secret。token 可能过期 — `401` 是预期的，容忍。
 
 ```bash
-curl -sS -w '\nHTTP %{http_code}\n' -X POST \\
-  -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \\
-  -H 'Content-Type: application/json' \\
-  "https://lotusflare.atlassian.net/rest/api/3/issue/ISSUE_KEY/remotelink" \\
+curl -sS -w '\nHTTP %{http_code}\n' -X POST \
+  -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
+  -H 'Content-Type: application/json' \
+  "https://lotusflare.atlassian.net/rest/api/3/issue/ISSUE_KEY/remotelink" \
   -d '{
     "globalId": "slack-thread=PERMALINK",
     "application": { "type": "com.slack", "name": "Slack" },
