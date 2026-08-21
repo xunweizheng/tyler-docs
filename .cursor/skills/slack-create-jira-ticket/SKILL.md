@@ -100,16 +100,7 @@ Slack thread: <permalink>
 `JIRA_EMAIL` 和 `JIRA_API_TOKEN` 是环境 secret。token 可能过期 — `401` 是预期的，容忍。
 
 ```bash
-curl -sS -w '\nHTTP %{http_code}\n' -X POST \
-  -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
-  -H 'Content-Type: application/json' \
-  "https://lotusflare.atlassian.net/rest/api/3/issue/ISSUE_KEY/remotelink" \
-  -d '{
-    "globalId": "slack-thread=PERMALINK",
-    "application": { "type": "com.slack", "name": "Slack" },
-    "relationship": "Slack thread",
-    "object": { "url": "PERMALINK", "title": "Slack thread" }
-  }'
+curl -sS -w '\nHTTP %{http_code}\n' -X POST -u "$JIRA_EMAIL:$JIRA_API_TOKEN" -H 'Content-Type: application/json' "https://lotusflare.atlassian.net/rest/api/3/issue/ISSUE_KEY/remotelink" -d '{"globalId":"slack-thread=PERMALINK","application":{"type":"com.slack","name":"Slack"},"relationship":"Slack thread","object":{"url":"PERMALINK","title":"Slack thread"}}'
 ```
 
 `201` 或 `200` 表示挂上了。`globalId` 保证幂等，重跑会更新已有链接，不会重复。
