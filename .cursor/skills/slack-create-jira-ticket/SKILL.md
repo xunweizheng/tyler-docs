@@ -105,7 +105,7 @@ Description 用 Markdown：
 Slack thread: <permalink>
 ```
 
-只写 thread 里真说过的事。不要编造 acceptance criteria、priority、severity、受影响服务。thread 太薄，写不出 Context，就在 thread 里问一个问题，不要猜。
+只写 thread 里真说过的事。不要编造 acceptance criteria、priority、severity、受影响服务。Requested Due Date 按 Step 4 填，不要因此去问。thread 太薄，写不出 Context，就在 thread 里问一个问题，不要猜。
 
 除非 thread 里指名了人，否则不设 assignee；指了就用 `lookupJiraAccountId` 解析，不明确就跳过。
 
@@ -113,7 +113,13 @@ Slack thread: <permalink>
 
 用 Atlassian MCP 的 `createJiraIssue`，传 `cloudId`、`projectKey`、`issueTypeName`、`summary`、`description`、`contentFormat: "markdown"`。
 
-只建一张。建失败就停下来，在 thread 里报错 — 不要换 project 或 type 重试硬拼一个成功。
+**Requested Due Date 必填。** `GCOMDEV` 的字段是 `customfield_11063`（datepicker，`YYYY-MM-DD`），经 `additional_fields` 传入。
+
+- thread / 触发消息里写了日期，用那个日期。
+- **没说就填今天 + 4 周（28 天），不要再问，也不要等确认。**
+- 不要把 due date 写进 Slack 回帖。
+
+只建一张。建失败就停下来，在 thread 里报错 — 不要换 project 或 type 重试硬拼一个成功。唯一例外：Jira 只是报 Requested Due Date 必填，而请求里漏了该字段 — 补上默认日期再试一次。
 
 ## Step 5 — 把 Slack thread 挂成 remote link（允许失败）
 
