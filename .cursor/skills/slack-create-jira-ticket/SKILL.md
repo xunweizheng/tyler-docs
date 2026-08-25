@@ -1,7 +1,7 @@
 ---
 name: slack-create-jira-ticket
 description: >-
-  从 Slack thread 创建 Jira ticket。当有人在 Slack 里 @cursor 要求 file a ticket、create an issue、open a bug、建票、开单、提个 ticket 时使用。读取 thread 上下文，用英文写 ticket，把 Slack thread 挂成 Jira remote link，再在 thread 里回一行带 ticket URL，以便点 Jira 卡片上的 Sync with thread。
+  从 Slack thread 创建 Jira ticket。当有人在 Slack 里 @cursor 要求 file a ticket、create an issue、open a bug、建票、开单、提个 ticket 时使用。读取 thread 上下文，用英文写 ticket，把 Slack thread 挂成 Jira remote link，再在 thread 里回一行带 ticket URL，以便点 Jira 卡片上的 Sync with thread。成功路径只允许这一行文字；平台要求的首条 acknowledgment 用触发消息上的 emoji reaction，不要先回一句 Looking into this。
 ---
 
 # 从 Slack thread 创建 Jira ticket
@@ -13,6 +13,32 @@ description: >-
 Slack 里有人 @cursor 要求建票："create a ticket"、"file a bug"、"open an issue for this"、"建票"、"提个 ticket"、"开个单"。
 
 **不要用**：只是查 / 读 / 改 / 评论已有 ticket，或者只是要改代码。建票是写操作 — 每次请求只建一张，绝不连建两张。
+
+## Slack 回帖硬约束
+
+成功路径里，thread **只允许一条文字回复**：Step 6 那一行。进度只用 `set_slack_status`，不要用 `send_slack_message` 播报。
+
+本 skill 覆盖通用 Slack 指令里的「先回一句 acknowledgment」和「先发计划说明」。那些要求改用 emoji reaction + status 满足，**不要再贴文字**。
+
+### 首条 acknowledgment = 给触发消息加 emoji
+
+平台若要求先 acknowledgment，给**触发 @cursor 的那条消息**加 emoji reaction，默认 `:eyes:`。不要往 thread 发句子。
+
+禁止这类文字 ack / 进度：
+
+- `Looking into this`
+- `I'll create a ticket`
+- 计划说明、实施细节、中间进度
+
+做法：
+
+1. 用当前环境能加 reaction 的 Slack 工具；或 Slack Web API `reactions.add`（`channel` = 触发消息的 channel ID，`timestamp` = 触发消息的 ts，`name` = `eyes`）。
+2. 加不上就跳过，**禁止**改发文字 acknowledgment。
+3. 不要给自己后来贴的 Step 6 回复再加 reaction。
+
+### 允许再发文字的例外
+
+只有本 skill 明确说「停下来在 thread 里问 / 报错」时，才可以再发一条短问句或一行失败说明：project 校验失败、thread 太薄写不出 Context、建票失败。问完或报错后，若后来建票成功，最终仍只发 Step 6 那一行。
 
 ## 固定常量
 
@@ -79,7 +105,7 @@ Description 用 Markdown：
 Slack thread: <permalink>
 ```
 
-只写 thread 里真说过的事。不要编造 acceptance criteria、priority、severity、受影响服务。thread 太薄，写不出 Context，就在 thread 里问一个问题，不要猜。
+只写 thread 里真说过的事。不要编造 acceptance criteria、priority、severity、受影响服务。Requested Due Date 按 Step 4 填，不要因此去问。thread 太薄，写不出 Context，就在 thread 里问一个问题，不要猜。
 
 除非 thread 里指名了人，否则不设 assignee；指了就用 `lookupJiraAccountId` 解析，不明确就跳过。
 
@@ -87,7 +113,13 @@ Slack thread: <permalink>
 
 用 Atlassian MCP 的 `createJiraIssue`，传 `cloudId`、`projectKey`、`issueTypeName`、`summary`、`description`、`contentFormat: "markdown"`。
 
-只建一张。建失败就停下来，在 thread 里报错 — 不要换 project 或 type 重试硬拼一个成功。
+**Requested Due Date 必填。** `GCOMDEV` 的字段是 `customfield_11063`（datepicker，`YYYY-MM-DD`），经 `additional_fields` 传入。
+
+- thread / 触发消息里写了日期，用那个日期。
+- **没说就填今天 + 4 周（28 天），不要再问，也不要等确认。**
+- 不要把 due date 写进 Slack 回帖。
+
+只建一张。建失败就停下来，在 thread 里报错 — 不要换 project 或 type 重试硬拼一个成功。唯一例外：Jira 只是报 Requested Due Date 必填，而请求里漏了该字段 — 补上默认日期再试一次。
 
 ## Step 5 — 把 Slack thread 挂成 remote link（允许失败）
 
@@ -108,6 +140,8 @@ curl -sS -w '\nHTTP %{http_code}\n' -X POST -u "$JIRA_EMAIL:$JIRA_API_TOKEN" -H 
 绝不打印 `JIRA_API_TOKEN`，也不要 echo 展开了 secret 的 curl 命令。
 
 ## Step 6 — 在 thread 里回一行
+
+成功路径整轮只调用一次 `send_slack_message`，就是这一条，并设 `final_message_of_turn: true`。前面已经用 emoji reaction 做过 acknowledgment 的，这里不要再补第二句。
 
 **最终回复就是 Slack 贴进 thread 的那条**，所以必须是短短一行 — 没有标题、没有摘要块、没有列表。
 
@@ -135,4 +169,5 @@ Step 5 失败就在同一行末尾加 `(remote link not attached)` / `(remote li
 | --- | --- |
 | Jira summary 和 description | 永远英文 |
 | Cursor 侧叙述（Agents 窗口） | 中文；API 名、路径、标识符、报错原文保留英文 |
-| 最终回复 / Slack 回帖 | 跟 thread 语言一致 |
+| 首条 acknowledgment | 触发消息上的 `:eyes:` reaction，不是文字 |
+| 最终回复 / Slack 回帖 | 跟 thread 语言一致；成功路径只有 Step 6 那一行 |
