@@ -1,12 +1,12 @@
 ---
 name: slack-create-jira-ticket
 description: >-
-  从 Slack thread 创建 Jira ticket。当有人在 Slack 里 @cursor 要求 file a ticket、create an issue、open a bug、建票、开单、提个 ticket 时使用。读取 thread 上下文，用英文写 ticket，把 Slack thread 挂成 Jira remote link，再在 thread 里回一行带 ticket URL，以便点 Jira 卡片上的 Sync with thread。成功路径只允许这一行文字；平台要求的首条 acknowledgment 用触发消息上的 emoji reaction，不要先回一句 Looking into this。
+  从 Slack thread 创建 Jira ticket。当有人在 Slack 里 @cursor 要求 file a ticket、create an issue、open a bug、建票、开单、提个 ticket 时使用。读取 thread 上下文，用英文写 ticket，把 Slack thread 挂成 Jira remote link，再在 thread 里回一行带 ticket URL。成功路径只允许这一行文字；平台要求的首条 acknowledgment 用触发消息上的 emoji reaction，不要先回一句 Looking into this。
 ---
 
 # 从 Slack thread 创建 Jira ticket
 
-把当前 Slack thread 变成一张 Jira work item，关联回 Slack，再回一行，让人去点 Jira 原生的 thread 同步。
+把当前 Slack thread 变成一张 Jira work item，关联回 Slack，再回一行带 ticket URL。
 
 ## 何时使用
 
@@ -145,18 +145,18 @@ curl -sS -w '\nHTTP %{http_code}\n' -X POST -u "$JIRA_EMAIL:$JIRA_API_TOKEN" -H 
 
 **最终回复就是 Slack 贴进 thread 的那条**，所以必须是短短一行 — 没有标题、没有摘要块、没有列表。
 
-语言跟 thread 走。Jira URL **必须是裸 URL**，不要包 Markdown 链接，否则 Jira Cloud for Slack app 解不开 unfurl，卡片上的 **Sync with thread** 按钮就出不来。
+语言跟 thread 走。Jira URL **必须是裸 URL**，不要包 Markdown 链接，否则 Jira Cloud for Slack app 解不开 unfurl。不要在回帖里提 Sync with thread。
 
 英文 thread：
 
 ```text
-Created GCOMDEV-1234 — https://lotusflare.atlassian.net/browse/GCOMDEV-1234 — hit "Sync with thread" on the Jira card to mirror this thread into the ticket.
+Created GCOMDEV-1234 — https://lotusflare.atlassian.net/browse/GCOMDEV-1234
 ```
 
 中文 thread：
 
 ```text
-已创建 GCOMDEV-1234 — https://lotusflare.atlassian.net/browse/GCOMDEV-1234 — 点 Jira 卡片上的 "Sync with thread" 即可把本 thread 同步进 ticket 评论。
+已创建 GCOMDEV-1234 — https://lotusflare.atlassian.net/browse/GCOMDEV-1234
 ```
 
 Step 5 失败就在同一行末尾加 `(remote link not attached)` / `(remote link 未挂上)`。
