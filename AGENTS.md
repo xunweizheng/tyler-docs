@@ -1,11 +1,9 @@
 # tyler-docs
 
-Personal notes and Cursor skills only.
+空白仓库，作为云端环境运行 agent 的 null / vanilla 起点。
 
 ## Cursor Cloud specific instructions
 
 - Do not start a dev server or any other service.
-- Do not scaffold VitePress, npm apps, or other project boilerplate.
+- Do not scaffold a project.
 - `install` is a no-op. There is no `start` command.
-- Skills for Slack `@cursor` belong in `.cursor/skills/<name>/SKILL.md`.
-- When invoked from Slack, apply those repo skills. Mention `repo=xunweizheng/tyler-docs` or `in tyler-docs` if routing is ambiguous.
